@@ -1,9 +1,10 @@
+use flc_tui_widgets::widgets::{Paragraph, Wrap};
 use ratatui::{
     backend::TestBackend,
     buffer::Buffer,
     layout::Alignment,
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Padding, Paragraph, Wrap},
+    widgets::{Block, Borders, Padding},
     Terminal,
 };
 
