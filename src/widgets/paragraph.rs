@@ -366,7 +366,7 @@ impl<'a> Paragraph<'a> {
             line: current_line,
             width: current_line_width,
             alignment: current_line_alignment,
-            wrapped: _,
+            wrapped,
         }) = composer.next_line()
         {
             if y >= self.scroll.0 {
@@ -385,7 +385,7 @@ impl<'a> Paragraph<'a> {
                     x += width as u16;
                 }
             }
-            y += 1;
+            y += 1 + wrapped as u16;
             if y >= area.height + self.scroll.0 {
                 break;
             }
