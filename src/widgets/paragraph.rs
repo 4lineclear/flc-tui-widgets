@@ -51,8 +51,10 @@ pub struct Paragraph<'a> {
     scroll: (u16, u16),
     /// Alignment of the text
     alignment: Alignment,
-    /// Whether to consider the wrap
-    scroll_consider_wrap: bool,
+    /// How to hand scroll when wrap is enabled
+    ///
+    /// See the [`Paragraph::scroll_consider_wrap`] function
+    scroll_consider_wrap: bool, // NOTE: maybe move to Wrap
 }
 
 /// Describes how to wrap text across lines.
@@ -194,7 +196,27 @@ impl<'a> Paragraph<'a> {
 
     /// Set whether scroll considers wrap
     ///
-    /// When this is false, scroll may undershoot the correct line
+    /// When this is false, scroll may undershoot the correct line.
+    ///
+    /// For example if you had:
+    ///
+    /// 1. ...Long text...
+    /// 2. ...
+    /// 3. ...Long text...
+    /// 4. ...
+    ///
+    /// Which would wrap to:
+    ///
+    /// 1.1. ...
+    /// 1.2. ...
+    /// 2.   ...
+    /// 3.1. ...
+    /// 3.2. ...
+    /// 3.3. ...
+    /// 4.   ...
+    ///
+    /// With a scroll of `(3,0)`, the normal behavior would get you to
+    /// '3.1', with `scroll_consider_wrap` enabled, you instead get to '4'
     #[must_use = "method moves the value of self and returns the modified value"]
     pub const fn scroll_consider_wrap(mut self, scroll_consider_wrap: bool) -> Self {
         self.scroll_consider_wrap = scroll_consider_wrap;
