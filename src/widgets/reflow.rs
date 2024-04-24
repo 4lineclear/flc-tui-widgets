@@ -21,6 +21,11 @@ pub struct WrappedLine<'lend, 'text> {
     pub width: u16,
     /// Whether the line was aligned left or right
     pub alignment: Alignment,
+    /// Number of times this line was wrapped
+    ///
+    /// If n = 0, this line was not wrapped. If n != 0,
+    /// the next n lines were part of this line
+    pub wraps: u16,
 }
 
 /// A state machine that wraps lines on word boundaries.
@@ -73,6 +78,8 @@ where
 
         let mut current_line: Option<Vec<StyledGrapheme<'a>>> = None;
         let mut line_width: u16 = 0;
+
+        let mut wraps = 0;
 
         // Try to repeatedly retrieve next line
         while current_line.is_none() {
@@ -145,6 +152,7 @@ where
                             // or if it would be too long with the current partially processed word added
                             || current_line_width + whitespace_width + word_width >= self.max_line_width && symbol_width > 0
                         {
+                            wraps += 1;
                             let mut remaining_width = (i32::from(self.max_line_width)
                                 - i32::from(current_line_width))
                             .max(0) as u16;
@@ -217,6 +225,7 @@ where
                 line: &self.current_line,
                 width: line_width,
                 alignment: self.current_alignment,
+                wraps,
             })
         } else {
             None
@@ -317,6 +326,7 @@ where
                 line: &self.current_line,
                 width: current_line_width,
                 alignment: current_alignment,
+                wraps: 0,
             })
         }
     }
@@ -379,6 +389,7 @@ mod test {
             line: styled,
             width,
             alignment,
+            ..
         }) = composer.next_line()
         {
             let line = styled
