@@ -6,4 +6,5 @@ Currently added widgets below.
 
 ## Paragraph  
 
-Added but no modifications yet
+The custom Paragraph widget is almost exactly the same, but features the
+"scroll_consider_wrap" field & function. See it's function for what it does.
