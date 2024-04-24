@@ -366,6 +366,7 @@ impl<'a> Paragraph<'a> {
             line: current_line,
             width: current_line_width,
             alignment: current_line_alignment,
+            wrapped: _,
         }) = composer.next_line()
         {
             if y >= self.scroll.0 {

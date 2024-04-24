@@ -21,6 +21,8 @@ pub struct WrappedLine<'lend, 'text> {
     pub width: u16,
     /// Whether the line was aligned left or right
     pub alignment: Alignment,
+    /// Whether the line has been wrapped or not
+    pub wrapped: bool,
 }
 
 /// A state machine that wraps lines on word boundaries.
@@ -217,6 +219,7 @@ where
                 line: &self.current_line,
                 width: line_width,
                 alignment: self.current_alignment,
+                wrapped: self.wrapped_lines.is_some(),
             })
         } else {
             None
@@ -317,6 +320,7 @@ where
                 line: &self.current_line,
                 width: current_line_width,
                 alignment: current_alignment,
+                wrapped: false,
             })
         }
     }
@@ -379,6 +383,7 @@ mod test {
             line: styled,
             width,
             alignment,
+            ..
         }) = composer.next_line()
         {
             let line = styled
