@@ -51,6 +51,8 @@ pub struct Paragraph<'a> {
     scroll: (u16, u16),
     /// Alignment of the text
     alignment: Alignment,
+    /// Whether to consider the wrap
+    scroll_consider_wrap: bool,
 }
 
 /// Describes how to wrap text across lines.
@@ -118,6 +120,7 @@ impl<'a> Paragraph<'a> {
             text: text.into(),
             scroll: (0, 0),
             alignment: Alignment::Left,
+            scroll_consider_wrap: false,
         }
     }
 
@@ -186,6 +189,15 @@ impl<'a> Paragraph<'a> {
     #[must_use = "method moves the value of self and returns the modified value"]
     pub const fn scroll(mut self, offset: (Vertical, Horizontal)) -> Self {
         self.scroll = offset;
+        self
+    }
+
+    /// Set whether scroll considers wrap
+    ///
+    /// When this is false, scroll may undershoot the correct line
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub const fn scroll_consider_wrap(mut self, scroll_consider_wrap: bool) -> Self {
+        self.scroll_consider_wrap = scroll_consider_wrap;
         self
     }
 
@@ -362,14 +374,19 @@ impl Paragraph<'_> {
 impl<'a> Paragraph<'a> {
     fn render_text<C: LineComposer<'a>>(&self, mut composer: C, area: Rect, buf: &mut Buffer) {
         let mut y = 0;
+        let mut scroll_offset = self.scroll.0;
+
         while let Some(WrappedLine {
             line: current_line,
             width: current_line_width,
             alignment: current_line_alignment,
-            wrapped,
+            wraps,
         }) = composer.next_line()
         {
-            if y >= self.scroll.0 {
+            if wraps != 0 && y < scroll_offset && self.scroll_consider_wrap {
+                scroll_offset += wraps;
+            } // NOTE: maybe use arithmetic instead of if
+            if y >= scroll_offset {
                 let mut x = get_line_offset(current_line_width, area.width, current_line_alignment);
                 for StyledGrapheme { symbol, style } in current_line {
                     let width = symbol.width();
@@ -379,14 +396,14 @@ impl<'a> Paragraph<'a> {
                     // If the symbol is empty, the last char which rendered last time will
                     // leave on the line. It's a quick fix.
                     let symbol = if symbol.is_empty() { " " } else { symbol };
-                    buf.get_mut(area.left() + x, area.top() + y - self.scroll.0)
+                    buf.get_mut(area.left() + x, area.top() + y - scroll_offset)
                         .set_symbol(symbol)
                         .set_style(*style);
                     x += width as u16;
                 }
             }
-            y += 1 + wrapped as u16;
-            if y >= area.height + self.scroll.0 {
+            y += 1;
+            if y >= area.height + scroll_offset {
                 break;
             }
         }
