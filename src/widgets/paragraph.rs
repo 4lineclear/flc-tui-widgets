@@ -395,9 +395,15 @@ impl Paragraph<'_> {
 
 impl<'a> Paragraph<'a> {
     fn render_text<C: LineComposer<'a>>(&self, mut composer: C, area: Rect, buf: &mut Buffer) {
-        let mut y = 0;
+        let mut y: u16 = 0;
         let mut scroll_offset = self.scroll.0;
+        // TODO: Turn LineComposer into a buffer rather than an iterator
+        // Also switch to using cummulative wraps
 
+        // NOTE: Performance becomes an issue as we have to iterate over all lines
+        // even when we're not rendering them
+
+        // NOTE: buffer style line wrapper may be better
         while let Some(WrappedLine {
             line: current_line,
             width: current_line_width,
@@ -405,9 +411,6 @@ impl<'a> Paragraph<'a> {
             wraps,
         }) = composer.next_line()
         {
-            if wraps != 0 && y < scroll_offset && self.scroll_consider_wrap {
-                scroll_offset += wraps;
-            } // NOTE: maybe use arithmetic instead of if
             if y >= scroll_offset {
                 let mut x = get_line_offset(current_line_width, area.width, current_line_alignment);
                 for StyledGrapheme { symbol, style } in current_line {
@@ -423,6 +426,8 @@ impl<'a> Paragraph<'a> {
                         .set_style(*style);
                     x += width as u16;
                 }
+            } else if self.scroll_consider_wrap {
+                scroll_offset += wraps;
             }
             y += 1;
             if y >= area.height + scroll_offset {
